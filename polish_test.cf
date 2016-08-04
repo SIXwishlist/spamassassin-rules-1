@@ -1,0 +1,309 @@
+# SpamAssassin rules file: Polish body tests
+# version 2014-01-19
+# Will work only on mailserver receiving spam from polish spammers, on all other mailservers will just waste CPU cycles
+# Maintainer: <lemat at lemat.priv.pl>
+#
+# See 'perldoc Mail::SpamAssassin::Conf' for details.
+#
+# <@LICENSE>
+# I don't care. Just use it for your own good.
+# </@LICENSE>
+#
+# near the end of tis file is comented out "score ALL_PL_RULES     99"
+# Score of 99 works like in EICAR/GTUBE tests - much more than kill level
+# and that is EXACTLY as I recommend
+# however SA guys complained about "ridiculously high score"
+# (see https://issues.apache.org/SpamAssassin/show_bug.cgi?id=6674)
+# and therefore you should manually set the score
+# and remove the comment # sign - to confirm that you're aware of what you're doing
+#
+# in the middle of the file there are some minor scores - between 1-3
+#
+# Please test these rules before use (spamassassin --lint, sa-compile)
+# DO NOT dowload this file via cron and waste my bandwidth - it changes once a week
+#
+###########################################################################
+# Regexpy dla SpamAssassina wylapujace polskich spamerow
+# Dzialaja tylko w Polsce tzn. na innych serwerach bedzie to tylko generowanie ciepla
+# Opiekun: <lemat at lemat.priv.pl>
+#
+# <@LICENCJA>
+# Mam ja w nosie, po prostu uzywaj.
+# </@LICENCJA>
+#
+# pod koniec pliku jest zakomentowana linia "score ALL_PL_RULES     99"
+# Jak widac SCORE jest ustawione na podobienstwo testow EICARA/GTUBE - i taki tez bedzie skutek uzywania moich regulek
+# ale poniewaz zostaÅ‚am oprotestowany
+# (zobacz https://issues.apache.org/SpamAssassin/show_bug.cgi?id=6674)
+# to musisz ustawiÄ‡ sobie score recznie i odkomentowac ta linie
+#
+# w srodku pliku znajduja sie reguly z mniejszym score 1-3
+#
+# Przetestuj reguly przed uzyciem. (spamassassin --lint, sa-compile)
+# NIE SCIAGAJ tego pliku cronem i nie marnuj mojego lacza - zmienia sie on bardzo rzadko, ~raz na tydzieÅ„
+#
+###########################################################################
+
+# section below requires local rbldnsd with zones from http://lemat.priv.pl/pliki/tld.gz
+# if you don't have rbldnsd or don't want this - remove following section
+# local rbldnsd HOWTO is here (polish only): http://www.lemat.priv.pl/index.php?m=page&pg_id=113
+# ponizsza sekcja wymaga odpalonego lokalnie rbldnsd z plikiem http://lemat.priv.pl/pliki/tld.gz
+# jezeli nie masz rbldnsd lub nie chcesz uzywac - usun
+# opis konfiguracji rbldnsd jest tu: http://www.lemat.priv.pl/index.php?m=page&pg_id=113
+
+#header     LEMAT_CHIKOR    eval:check_rbl_txt('chikor.rbl.tld', 'chikor.rbl.tld.')
+#describe   LEMAT_CHIKOR    chikor
+#tflags         LEMAT_CHIKOR    net
+
+ifplugin Mail::SpamAssassin::Plugin::URIDNSBL
+
+#uridnssub      URIBL_TLD2      dynamic.rbl.tld.       A      127.0.0.2
+#body           URIBL_TLD2      eval:check_uridnsbl('URIBL_TLD2')
+#describe       URIBL_TLD2      Contains an URL listed in the dynamic.rbl.tld blocklist
+#tflags         URIBL_TLD2      net
+#reuse          URIBL_TLD2
+
+#uridnssub      URIBL_TLD3      chikor.rbl.tld.       A       127.0.0.3
+#body           URIBL_TLD3      eval:check_uridnsbl('URIBL_TLD3')
+#describe       URIBL_TLD3      Contains an URL listed in the chikor.rbl.tld (China) blocklist
+#tflags         URIBL_TLD3      net
+#reuse          URIBL_TLD3
+
+#uridnssub      URIBL_TLD5      chikor.rbl.tld.       A       127.0.0.5
+#body           URIBL_TLD5      eval:check_uridnsbl('URIBL_TLD5')
+#describe       URIBL_TLD5      Contains an URL listed in the chikor.rbl.tld (Misc) blocklist
+#tflags         URIBL_TLD5      net
+#reuse          URIBL_TLD5
+
+#urirhsbl       _URIBL_WS_TLD   uribl.rbl.tld.        A
+#body           _URIBL_WS_TLD   eval:check_uridnsbl('URIBL_WS_TLD')
+#describe       _URIBL_WS_TLD   Contains an URL listed in the uribl.rbl.tld blocklist
+#tflags         _URIBL_WS_TLD   net
+#reuse          _URIBL_WS_TLD
+
+#urifullnsrhsbl _URIBL_WS_NSTLD  uribl.rbl.tld.        A
+#body           _URIBL_WS_NSTLD  eval:check_uridnsbl('URIBL_WS_TLD')
+#describe       _URIBL_WS_NSTLD  Contains an URL having the uribl.rbl.tld listed NS
+#tflags         _URIBL_WS_NSTLD  net
+#reuse          _URIBL_WS_NSTLD
+
+#score LEMAT_CHIKOR      5
+#score URIBL_TLD2 2.0
+#score URIBL_TLD3 2.0
+#score URIBL_TLD5 10.0
+
+#meta            URIBL_WS_TLD (_URIBL_WS_TLD || _URIBL_WS_NSTLD)
+#describe        URIBL_WS_TLD  Contains an URL listed in the uribl.rbl.tld blocklist
+#score           URIBL_WS_TLD 20
+
+
+endif   # Mail::SpamAssassin::Plugin::URIDNSBL
+
+# section below matches text commonly used by polish spammers
+# setup and uncomment the SCORE ALL_PL_RULES
+# ponizsza sekcja to regexpy na tresc polskiego spamu
+# pamietaj aby ustawic i odkomentowac SCORE ALL_PL_RULES
+
+# regulki 1XX - cytowanie ustawy
+
+body LEMAT_101      /Zgodnie\s+z\s+Ustaw.{1,8}z\s+dnia\s+26.{1,8}08.{1,8}2002\s*r.{1,8}\(Dz.{1,8}U.{1,8}(Nr|numer)\s+(144|sto\s+czterdzie.{1,8}ci\s+cztery),\s+poz.{0,8}(1204|tysi.{1,8}c\s+dwie.{1,8}cie\s+cztery)/i
+describe LEMAT_101  Pytanie o zgode na otrzymywanie spamu
+
+body LEMAT_102      /\(Dz.{0,16}U.{0,8}z\s+2002\s*r,\s+nr\s+(144|sto\s+czterdzie.{1,8}ci\s+cztery)\s+poz.{0,8}(1204|tysi.{1,8}c\s+dwie.{1,8}cie\s+cztery)\s+ustawy\s+z\s+dnia\s+(18|osiemnastego).{1,8}(07|lipca|VII).{1,8}2002\s*r.\)\s+oraz\s+dyrektyw.{1,8}(UOKiK|Urz.{1,8}du\s+do\s+spraw\s+Ochrony\s+Klienta\s+i\s+konsumenta)/i
+describe LEMAT_102  Pytanie o zgode na otrzymywanie spamu
+
+body LEMAT_103      /ustaw.{1,8}z\s+dn.{1,8}(18|osiemnastego).{1,8}(07|lipca|VII).{1,8}2002\s*r.{1,8}o.{1,8}wiadczeniu\s+us.{1,8}ug\s+drog.{1,8}elektroniczn/i
+describe LEMAT_103  Pytanie o zgode na otrzymywanie spamu
+
+body LEMAT_104      /W\s+zwi.{1,8}zku\s+z\s+art.{1,8}10\s+ustawy\s+z\s+dn.{1,8}(18|osiemnastego).{1,8}(07|lipca|VII).{1,8}2002\s*r.{1,8}o.{1,8}wiadczeniu\s+us.{1,8}ug\s+drog.{1,8}elektroniczn.{1,8}/i
+describe LEMAT_104  Pytanie o zgode na otrzymywanie spamu
+
+body LEMAT_105      /ustaw.{1,8}z\s+dn.{1,8}(18|osiemnastego).{1,8}(07|lipca|VII).{1,8}2002\s*r.{0,8}\(Dz.{1,8}U.{1,8}nr\s+144,\s+poz.{0,8}(1204|tysi.{1,8}c\s+dwie.{1,8}cie\s+cztery)\)\s+o.{1,8}wiadczeniu\s+us.{1,8}ug\s+drog.{1,8}elektroniczn.{1,8}/i
+describe LEMAT_105  Pytanie o zgode na otrzymywanie spamu
+
+body LEMAT_106      /Dz.{1,8}U.{1,8}z\s+(9.{0,8}(9|wrze.{1,8}snia|IX).{0,8})?2002\s*r.{0,8}(Nr|numer)\s+(144|sto\s+czterdzie.{1,8}ci\s+cztery),\s+poz.{0,8}(1204|tysi.{1,8}c\s+dwie.{1,8}cie\s+cztery)/i
+describe LEMAT_106  Pytanie o zgode na otrzymywanie spamu
+
+body LEMAT_107      /Dz.{1,8}U.{1,8}(Nr|numer)\s+(144|sto\s+czterdzie.{1,8}ci\s+cztery)(\s+z\s+(9.{0,8}(9|wrze.{1,8}snia|IX).{0,8})?2002\s*r)?.{0,8}poz.{0,8}(1204|tysi.{1,8}c\s+dwie.{1,8}cie\s+cztery)/i
+describe LEMAT_107  Pytanie o zgode na otrzymywanie spamu
+
+body HORHE_108      /(w\s+zwi.{1,8}zku|zgodnie|uwagi)\s+(z|na)\s+obowi.{1,8}zuj.{1,8}(cym|ce)\s+(stanem|przepisy)?\s+(prawem|prawnym|prawa)/i
+describe HORHE_108      Pytanie o zgode na otrzymywanie spamu
+score HORHE_108     1
+
+body LEMAT_109      /Ustaw.{1,8}\s+o\s+.{1,8}wiadczeniu\s+us.{1,8}ug\s+drog.{1,8}\s+elektroniczn.{1,8}/i
+describe LEMAT_109  Powolanie na ustawe
+score LEMAT_109     1
+
+#Ta wiadomoÅ›Ä‡ jest wysÅ‚ana w oparciu o nowa legislacje dyrektywy Unii Europejskiej dotyczÄ…cej wysyÅ‚ania poczty emailowej .Sekcja 301 , paragraf (a) (2) (c) z S.1618 pod tytuÅ‚em 3 z S 1618 , regulacji kongresu
+body LEMAT_110          /Ta\s+wiadomo.{1,8}jest\s+wys.{1,8}ana\s+w\s+oparciu\s+o\s+now.{1,8}legislacj.{1,8}dyrektywy\s+Unii\s+Europejskiej\s+dotycz.{1,8}cej\s+wysy.{1,8}ania\s+poczty\s+e-mailowej\s*.\s*Sekcja\s+301\s*,\s+paragraf\s+\(a\)\s+\(2\)\s+\(c\)\s+z\s+S.1618\s+pod\s+tytu.{1,8}em\s+3\s+z\s+S\s+1618\s*,\s+regulacji\s+kongresu/i
+describe LEMAT_110      Powolanie na ustawe UE
+
+body HORHE_111          /pro.{1,2}b.{1,3}o\s+pozwolenie.{0,1}(|na)\s+przes.{1,2}anie\s+jednorazow.{1,3}oferty\s+handlowej/i
+describe HORHE_111      Pytanie o zgode na otrzymywanie spamu
+
+#od dnia 21-01-2013 r. dozwolone jest przesyÅ‚anie niezamÃ³wionej informacji handlowej do w/w odbiorcÃ³w
+body LEMAT_112          /od dnia 21.{1,8}01.{1,8}2013\s*r. dozwolone jest przesy.{1,2}anie niezam.{1,2}wionej informacji handlowej do w\/w odbiorc.{1,2}w/i
+describe LEMAT_112      Powolanie na nowa ustawe
+
+# regulki 2XX czyli "ten spam nie jest spamem" oraz "sam chciales dostawac spam"
+
+body LEMAT_201      /wiadomo.{1,8}t.{1,8}wys.{1,8}ali.{1,8}my\s+na\s+og.{1,8}lnodost.{1,8}pny\s+adres\s+e-mailowy/i
+describe LEMAT_201  Handlarz adresow email
+
+body LEMAT_202      /Je.{1,8}eli\s+nie\s+.{1,8}ycz.{1,8}sobie\s+Pa.{1,8}stwo\s+otrzymywania\s+podobnych\s+informacji/i
+describe LEMAT_202  Opt-out spam
+
+body LEMAT_203      /Dopuszczalne\s+jest\s+przes.{1,8}anie\s+na\s+adres\s+e?.{0,8}mail\s+pytania.{1,8}czy\s+adresat\s+zgadza\s+si.{1,8}na\s+otrzymywanie\s+drog.{1,8}elektroniczn.{1,8}informacji\s+handlowej/i
+describe LEMAT_203  Pytanie o zgode na otrzymywanie spamu
+
+body LEMAT_204      /materia.{1,8}y\s+z\s+konferencji\s+nt.\s+Bezpiecze.{1,8}stwa\s+w\s+Sieci\s+Internet,\s+Warszawa\s+14.{0,8}(3|marca|III).{0,8}2006/i
+describe LEMAT_204  Pytanie o zgode na otrzymywanie spamu
+
+body LEMAT_205      /Pa.{1,8}stwa\s+adres\s+e.{0,8}mail\s+(pochodzi\s+)?z\s+og.{1,8}lnie\s+dost.{1,8}pnych\s+.{1,8}r.{1,8}de/i
+describe LEMAT_205  Harvester adresow email
+
+body LEMAT_206      /Niniejsza\s+(pro.{1,8}ba|wiadomo.{1,8})\s+nie\s+jest\s+informacj.{1,8}handlow.{1,8}a\s+jedynie\s+zapytaniem\s+o\s+zgod.{1,8}na\s+przesy.{1,8}anie\s+informacji\s+handlowych\s+drog.{1,8}elektroniczn/i
+describe LEMAT_206  Pytanie o zgode na otrzymywanie spamu
+
+body LEMAT_207      /Pa.{1,8}stwa\s+dane\s+teleadresowe\s+otrzymali.{1,8}my\s+z\s+bazy\s+HBI\s+Polska\s+sp.\s+z\s+o.{1,8}o./i
+describe LEMAT_207  Paser adresow email
+
+body LEMAT_208      /Pa.{1,8}stwa\s+adres\s+(mejlowy|internetowy)\s+pobrali.{1,8}my\s+z\s+og.{1,8}lnie\s+dost.{1,8}pnych\s+(serwis.{1,8}w\s+internetowych|.{1,8}r.{1,8}de.{1,8})/i
+describe LEMAT_208  Harvester adresow email
+
+body LEMAT_209      /(e.{0,8}mail|wiadomo.{1,8})\s+jest\s+(jedynie\s+)?zapytaniem\s+o\s+(wyra.{1,8}enie\s+zgody|zgod.{1,8})\s+na\s+(otrzymanie|przes.{1,8}anie)\s+(materia.{1,8}w|informacji)\s+handlowych/i
+describe LEMAT_209  Pytanie o zgode na otrzymywanie spamu
+
+        body __LEMAT_210_1      /Szanowny\s+u.{1,8}ytkowniku\s+wygl.{1,8}da\s+na\s+to,.{1,8}e\s+masz\s+zablokowany\s+podgl.{1,8}d\s+wiadomo.{1,8}ci\s+w\s+formacie\s+HTML/i
+        describe __LEMAT_210_1      Mailing
+
+        body __LEMAT_210_2      /W\s+zwi.{1,8}zku\s+z\s+powy.{1,8}szym\s+nie\s+widzisz\s+listu\s+w\s+takiej\s+postaci\s+w\s+jakiej\s+go\s+dla\s+Ciebie\s+przygotowali.{1,8}my/i
+        describe __LEMAT_210_2      Mailing
+
+meta           LEMAT_210       (__LEMAT_210_1 && __LEMAT_210_2 )
+describe LEMAT_210      Mailing
+score LEMAT_210 3
+
+body BODYN_211          /Je.{1,8}li\s+nie\s+s.{1,8}\s+Pa.{1,8}stwo\s+zainteresowani\s+to\s+prosimy\s+zignorowa.{1,8}\s+(ten list|tego e-?maila)/i
+describe BODYN_211      Mailing do niezainteresowanych
+score BODYN_211 3
+
+body LEMAT_212          /(wysy.{1,8}amy\s+do\s+Pa.{1,8}stwa\s+pro.{1,8}b.{1,8}\s+o|wyra.{1,8}am)\s+zgod.{1,8}\s+na\s+otrzymanie\s+ofert/i
+describe LEMAT_212      Pytanie o zgode na otrzymywanie spamu
+
+body            __LEMAT_213M    /(szanuj.{1,8}c|maj.{1,8}c\s+na\s+uwadze)\s+pa.{1,8}stwa\s+prywatno.{1,8}/i
+describe        __LEMAT_213M    Spamer szanujacy prywatnosc
+
+meta           LEMAT_213       (__LEMAT_213M && ( LEMAT_101 || LEMAT_102 || LEMAT_103 || LEMAT_104 || LEMAT_105 || LEMAT_106 || LEMAT_107 || HORHE_108 || LEMAT_109 ))
+describe       LEMAT_213       Spamer powoluje sie na ustawe oraz chroni nasza prywatnosc
+
+body LEMAT_214      /czy\s+zgadzaj.{1,8}si.{1,8}Pa.{1,8}stwo\s+na\s+otrzymanie\s+od\s+nas\s+oferty\s+handlowej\?/i
+describe LEMAT_214  Pytanie o zgode na otrzymywanie spamu
+score LEMAT_214     1
+
+body LEMAT_215          /Pa.{1,8}stwa\s+dane\s+adresowe\s+zosta.{1,8}y\s+pozyskane\s+z\s+publicznych\s+zasob.{1,8}w\s+z\s+sieci\s+Internet/i
+describe LEMAT_215      Harvester adresow email
+score LEMAT_215         2
+
+body LEMAT_216          /niniejszy\s+e?-?mail\s+nie\s+stanowi\s+przesy.{1,8}ki\s+maj.{1,8}cej\s+znamiona\s+spamu/i
+describe LEMAT_216      Ten spam nie jest spamem...
+score LEMAT_216         2
+
+body LEMAT_217          /Pa.{1,8}stwa\s+adres\s+zosta.{1,8}pozyskany\s+z\s+bazy\s+danych/i
+describe LEMAT_217      Harvester adresow email
+score LEMAT_217         2
+
+body HORHE_218      /w\s+zwi.{1,8}zku.{1,12}profilem\s+naszej\s+(firmy|dzia.{1,8}alno.{1,8}ci)/i
+describe HORHE_218  Nie interesuje mnie profil dzialalnosci spamera
+score HORHE_218     1
+
+body LEMAT_219          /naby.{1,8}a\s+w\s+dniu.{1,25}na\s+aukcji\s+internetowej\s+nr.{1,16}baz.{1,8}firmowych\s+adres.{1,8}w\s+email\s+zawieraj.{1,8}c.{1,8}Pa.{1,8}stwa\s+adres\s+email/i
+describe LEMAT_219      Paser adresow email
+score LEMAT_219         1
+
+body LEMAT_220      /dozwolone\s+jest\s+przesy.{1,8}anie\s+ofert\s+handlowych\s+na\s+adresy\s+firmowe/i
+describe LEMAT_220      ale nie na tym serwerze...
+score LEMAT_220         1
+
+body LEMAT_221          /Pa.{1,8}stwa\s+adres\s+zosta.{1,8}\s+pozyskany\s+bezpo.{1,8}rednio\s+z\s+Pa.{1,8}stwa\s+strony\s+internetowej\s+lub\s+z\s+oficjalnych\s+i\s+og.{1,8}lnie\s+dost.{1,8}pnych\s+baz\s+danych/i
+describe LEMAT_221      Harvester adresow email
+score LEMAT_221         2
+
+# regulki 3XX czyli teksty znanych spamerow
+
+body LEMAT_301      /38.{0,8}\(?044\)?.{0,8}455.{0,8}99.{0,8}99|38.{0,8}\(?[0O]67\)?.{0,8}44[0O].{0,8}48.{0,8}[0O]8|38.{0,8}\(?[0O]44\)?.{0,8}4[0O]7.{0,8}86.{0,8}26|38.{0,8}\(?[0O]67\)?.{0,8}5[0O]6.{0,8}[0O]1.{0,8}1[0O]/i
+describe LEMAT_301  spamer ICIC
+
+body LEMAT_302      /Mi.{1,8}dzynarodowe\s+Centrum\s+Informacyjno.{1,8}Konsultingowe|Osoba\s+odpowiedzialna.{1,8}Wiktoria.{1,8}wi.{1,8}cicka/i
+describe LEMAT_302  spamer ICIC
+
+body LEMAT_303      /Sekcja\s+Informacji\s+Ekonomicznej\s+INSTYTUTU\s+PROMOCJI\s+EKSPORTU\s+I\s+KOOPERACJI\s+bazy\s+danych:\s+FIRMY\s+W\s+POLSCE,\s+FIRMY\s+EUROPY/i
+describe LEMAT_303  spamer IPEIK
+
+body LEMAT_304          /wys.{1,8}ana\s+zgodnie\s+z\s+polityk.{1,8}reklamow.{1,8}grupy\s+Forgraf/i
+describe LEMAT_304      spamer forgraf
+
+body LEMAT_305          /Otrzyma.{1,8}e.{1,8}t.{1,8}wiadomo.{1,8}email,\s+poniewa.{1,8}poda.{1,8}e.{1,8}nam\s+swojego\s+emaila\s+korzystaj.{1,8}c\s+z\s+serwis.{1,8}w\s+nale.{1,8}cych\s+do\s+FinancialRepublic./i
+describe LEMAT_305      spamer FinancialRepublic
+
+body           __HORHE_306_1    /Ta\sinformacja\szosta.{1,2}a\swys.{1,2}ana\sprzez\sTouch\sMedia\sSA|dane\sznajduj.{1,2}\ssi.{1,8}\sw\sbazie\sdanych\sfirmy\sTouch\sMedia/i
+body           __HORHE_306_2    /Kampania\s(wys.{1,8}ana|zrealizowana)\sprzez\sTouch\sMedia/i
+meta           HORHE_306       __HORHE_306_1 || __HORHE_306_2
+describe       HORHE_306       Spamer Touch Media
+
+body HORHE_307          /rejestruj.{1,8}c\ssi.{1,8}\sw\sserwisie\sfilmypsp\.pl\swyrazi.{1,8}e.{1,8}\szgod.{1,8}\sna\swysy.{1,8}anie\sdo\ssiebie/i
+describe HORHE_307      Spamer filmypsp.pl
+
+body LEMAT_308      /UAB \?"DND Baltic\"?/
+describe LEMAT_308  Spamer DND Baltic
+
+header   LEMAT_309      Subject =~ /MENTOR dla firm/i
+describe LEMAT_309      Spamer integer-it.pl
+
+body            LR_PL_KONFERENCJA_UKRAINA /seminar\.pl\.ua|Inessa\s+Hudzik|(konferencja|przedstawicielstwo|biznes)\@tiscali.it/i
+describe        LR_PL_KONFERENCJA_UKRAINA body_ICIC
+
+header          LR_PL_KONFERENCJA_UKRAINA_R ALL =~ /vika\@mail\.zp\.ua|(konferencja|przedstawicielstwo|biznes)\@tiscali\.it/i
+describe        LR_PL_KONFERENCJA_UKRAINA_R header_ICIC
+
+
+# bodyn
+# example: postacie greet! Chcesz porozmawiac  Co prawda tu rzadko bywam, zwykle pisze tu -  http://hanna.3xa.info
+uri       __LOCAL_LINK_INFO   /http:\/\/\w{3,8}\.\w\w\w\.info/
+header    __LOCAL_FROM_O2     From =~ /\@o2\.pl/
+meta      LOCAL_LINK_INFO     __LOCAL_LINK_INFO && __LOCAL_FROM_O2
+describe  LOCAL_LINK_INFO     Link postaci http://cos.cos.info i z o2.pl
+score     LOCAL_LINK_INFO     5
+
+header    __LOCAL_UNDISCLOSED To=~/undisclosed recipients/
+meta      LOCAL_UNDIS         __LOCAL_UNDISCLOSED && FREEMAIL_FROM
+describe  LOCAL_UNDIS         undisclosed recipients from freemail
+score     LOCAL_UNDIS         3
+# /bodyn
+
+meta ALL_PL_RULES   LEMAT_101 || LEMAT_102 || LEMAT_103 || LEMAT_104 || LEMAT_105 || LEMAT_106 || LEMAT_107 || LEMAT_110 || LEMAT_112 || LEMAT_201 || LEMAT_202 || LEMAT_203 || LEMAT_204 || LEMAT_205 || LEMAT_206 || LEMAT_207 || LEMAT_208 || LEMAT_209 || LEMAT_212 || LEMAT_213 || LEMAT_301 || LEMAT_302 || LEMAT_303 || LEMAT_304 || LEMAT_305 || LR_PL_KONFERENCJA_UKRAINA_R || LR_PL_KONFERENCJA_UKRAINA || HORHE_306 || LEMAT_309
+describe ALL_PL_RULES   wszystkie polskie regexpy
+#score ALL_PL_RULES 99
+
+# those scores override default 0.01, TO_EQ_FM* rules are very nice
+# to score nadpisuje defaultowe 0.01, reguÅ‚ki TO_EQ_FM* bardzo ladnie lapia spam
+score TO_EQ_FM_DIRECT_MX                    1.650 0.659 1.650 0.659
+score TO_EQ_FM_HTML_DIRECT                  3.134 3.950 3.134 3.950
+score TO_EQ_FM_HTML_ONLY                    2.374 3.008 2.374 3.008
+
+header __EMPTY_FROM From =~ /^\s*$/
+header __EMPTY_TO   To =~ /^\s*$/
+header __EMPTY_CC   Cc =~ /^\s*$/
+header __HAS_FROM         exists:From
+header __HAS_TO           exists:To
+header __HAS_CC           exists:CC
+
+meta EMPTY_TO_OR_FROM_OR_CC (__HAS_TO && __EMPTY_TO) || (__HAS_FROM && __EMPTY_FROM) || (__HAS_CC &&  __EMPTY_CC)
+describe EMPTY_TO_OR_FROM_OR_CC Mail contains headers that are blank and shouldn't be.
+score EMPTY_TO_OR_FROM_OR_CC 3.0
+
+header MULTIPLE_FROM         From =~ /([^<]*<[^>]+@[^>]+>){2}/i
+describe MULTIPLE_FROM       wiele adresow nadawcy
+score MULTIPLE_FROM          1
+
