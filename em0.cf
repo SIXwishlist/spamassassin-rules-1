@@ -1,9 +1,14 @@
+# few domains that are annoying with spam 
 body EM0_SPAM /(?:inbpromo.eu|propern.xyz|inbmag.eu|broccolihot.xyz)/i
 score EM0_SPAM 15.0
 
+# don't mark ebay (and other trading sites) because they'll guarantee you money back 
 score MONEY_BACK 0.0
 
+# many e-mails have now so much HTML in it - don't score that... 
 score MIME_HTML_ONLY 0.0
+
+# some messages are encoded using base64 - lower the score for those filters...
 score BODY_URI_ONLY 0.5
 score BODY_SINGLE_WORD 1.0
 score BODY_SINGLE_URI 1.0
